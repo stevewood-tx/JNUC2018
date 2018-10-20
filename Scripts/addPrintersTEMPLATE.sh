@@ -36,7 +36,7 @@ ScriptLog $4 ${NOW}
 ## check for the proper printer drivers. Add if/them statements for each driver
 if [[ ! -f "/Library/Printers/PPDs/Contents/Resources/HP Color MFP E87640-50-60.gz" ]]; then
 	
-	/usr/local/bin/jamf policy -id 1680
+	/usr/local/bin/jamf policy -trigger hpPrinterDrivers
 	
 fi
 

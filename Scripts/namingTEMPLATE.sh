@@ -10,7 +10,7 @@
 #
 ##############################################################################
 # setup logging
-logFile="/private/var/log/nameComputer.log"
+logFile="/path/to/your/nameComputer.log"
 
 # Check for / create logFile
 if [ ! -f "${logFile}" ]; then
@@ -54,7 +54,7 @@ fi
 ScriptLog "Installing cocoaDialog"
 if [[ ! -e $CD ]]; then
 
-	${jamf_binary} policy -id 1205
+	${jamf_binary} policy -trigger cocoaDialog
 	
 fi
 
@@ -79,7 +79,7 @@ case ${country} in
 	countryCode='CA'
 	;;
 
-	'United States') ## <<-- use single quotes if case has a space in it
+'United States') ## <<-- use single quotes if case has a space in it
 	countryCode='US'
 	;;
 
@@ -93,7 +93,7 @@ agency=`echo $agency | cut -d' ' -f2-`
 ## get the code for the name
 case ${agency} in
 	
-	Company1) ## <<-- use single quotes if case has a space in it
+Company1) ## <<-- use single quotes if case has a space in it
 	agencyCode='CO1'
 	;;
 	
@@ -178,13 +178,18 @@ function DecryptString() {
 }
 
 ## upload log to JPS
-apiUser=$(DecryptString $4 '2e8ae0cfc360c410' '6dc974aeee54c08a91d1ba4b')
-apiPass=$(DecryptString $5 'aee810da39e48b93' 'e78b44b6e96bf2892bc06de4')
-jpsURL="https://your.jamfserver.com"
+#Decypt string 
+function DecryptString() {
+    echo "${1}" | /usr/bin/openssl enc -aes256 -d -a -A -S "${2}" -k "${3}"
+}
+
+apiUser=$(DecryptString $4 '<yoursalt>' '<yourkey>')
+apiPass=$(DecryptString $5 '<yoursalt>' '<yourkey>')
+jpsURL="https://your.jamfproserver.com"
 serial=$(system_profiler SPHardwareDataType | awk '/Serial\ Number\ \(system\)/ {print $NF}');
 
 ## get ID of computer
 JSS_ID=$(curl -H "Accept: text/xml" -sfku "${apiUser}:${apiPass}" "${jpsURL}/JSSResource/computers/serialnumber/${serial}/subset/general" | xpath /computer/general/id[1] | awk -F'>|<' '{print $3}')
-curl -sku $apiUser:$apiPass $jpsURL/JSSResource/fileuploads/computers/id/$JSS_ID -F name=@${logFile} -X POST
+curl -sku $apiUser:$apiPass $jpsURL/JSSResource/fileuploads/computers/id/$JSS_ID -F name=@${LOGFILE} -X POST
 
 exit 0

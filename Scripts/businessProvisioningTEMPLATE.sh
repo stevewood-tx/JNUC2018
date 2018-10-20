@@ -2,14 +2,10 @@
 
 ###############################################################################
 #
-# Name: das-tma-provisioning.sh
-# Version: 1.7
+# Name: businessUnit-provisioning.sh
+# Version: 1.0
 # Date:  11 Apr 2018
-# Modified: 2 May 2018
-#	        21 May 2018 - added Fiery drivers
-#			5 July 2018 - adding creative build
-#			10 Jul 2018 - adding printer logic, Apple SWU
-#           18 Jul 2018 - added WebEx and Zoom
+# Modified: 
 # Author:  Steve Wood (steve.wood@omnicomgroup.com)
 # Purpose:  provisioning script used for base load
 # 
@@ -17,27 +13,21 @@
 
 ## Set global variables
 
-LOGPATH='/private/var/omc/logs'
-LOGFILE=$LOGPATH/das-tma-provisioning-$(date +%Y%m%d-%H%M).log
+LOGPATH='/path/to/your/logs'
+LOGFILE=$LOGPATH/businessUnit-provisioning-$(date +%Y%m%d-%H%M).log
 VERSION=1.7
 CD="/usr/local/bin/cocoaDialog.app/Contents/MacOS/cocoaDialog"
 defaults='/usr/bin/defaults'
-surveyPlist='/var/omc/com.omnicom.survey.plist'
+surveyPlist='/path/to/your/com.company.survey.plist'
 DNLOG='/var/tmp/depnotify.log'
 
 # setup logging
 if [[ ! -d ${LOGPATH} ]]; then
 	## Setup logging
-	mkdir /private/var/omc
-	mkdir $LOGPATH
+	mkdir -p $LOGPATH
 fi
 
 set -xv; exec 1> $LOGFILE 2>&1
-
-#Decypt string 
-function DecryptString() {
-    echo "${1}" | /usr/bin/openssl enc -aes256 -d -a -A -S "${2}" -k "${3}"
-}
 
 #let's stay awake
 /bin/echo "Loads of Coffee Now!!"
@@ -72,7 +62,7 @@ echo "Status: Installing Adobe Products" >> ${DNLOG}
 /bin/echo "Installing Adobe Apps"
 /bin/date
 
-${jamf_binary} policy -id 1214 --forceNoRecon # Acrobat DC
+${jamf_binary} policy -trigger acrobatDC --forceNoRecon # Acrobat DC
 
 ## check if creative
 
@@ -80,71 +70,68 @@ case ${build} in
 	
 Creative)
 
-	${jamf_binary} policy -id 630 --forceNoRecon # Illustrator
-	${jamf_binary} policy -id 631 --forceNoRecon # InDesign
-	${jamf_binary} policy -id 635 --forceNoRecon # Photoshop
-	${jamf_binary} policy -id 637 --forceNoRecon # Bridge
+	${jamf_binary} policy -trigger illus2018 --forceNoRecon # Illustrator
+	${jamf_binary} policy -trigger indesing2018 --forceNoRecon # InDesign
+	${jamf_binary} policy -trigger photoshop2018 --forceNoRecon # Photoshop
+	${jamf_binary} policy -trigger bridge2018 --forceNoRecon # Bridge
 ;;	
 
 esac
 
-${jamf_binary} policy -id 532 --forceNoRecon # CC Elevated app
+${jamf_binary} policy -trigger ccdaElevated --forceNoRecon # CC Elevated app
 
 ### Install the "core" software
 echo "Status: Installing TMA Printer Drivers" >> ${DNLOG}
 ## Printer Drivers
 /bin/echo "Installing Printer Drivers"
 /bin/date
-${jamf_binary} policy -id 439 --forceNoRecon # ColorPass GX500
-${jamf_binary} policy -id 1416 --forceNoRecon # ColorPass GX400
-${jamf_binary} policy -id 1417 --forceNoRecon # CN_imagePASS_B2_v1_0R_FD51_v2
-${jamf_binary} policy -id 1418 --forceNoRecon # CN_imagePASS_B2_v1_0R_FD51_v2
+${jamf_binary} policy -trigger cpassGX500 --forceNoRecon # ColorPass GX500
+${jamf_binary} policy -trigger cpassGX400 --forceNoRecon # ColorPass GX400
+${jamf_binary} policy -trigger imagepassB2 --forceNoRecon # CN_imagePASS_B2_v1_0R_FD51_v2
 
 echo "Status: Installing AnyConnect Profile" >> ${DNLOG}
 ## Sophos
 /bin/echo "Installing AnyConnect Profile"
 /bin/date
-${jamf_binary} policy -id 1446 --forceNoRecon # AnyConnect Profile
+${jamf_binary} policy -trigger anyConnectProfile --forceNoRecon # AnyConnect Profile
 
 echo "Status: Installing Universal Type Client" >> ${DNLOG}
 ## UTC
 /bin/echo "Installing UTC"
 /bin/date
-${jamf_binary} policy -id 91 --forceNoRecon # UTC
-${jamf_binary} policy -id 1552 --forceNoRecon # UTC Prefs
+${jamf_binary} policy -trigger utc6 --forceNoRecon # UTC
+${jamf_binary} policy -trigger utcPrefs --forceNoRecon # UTC Prefs
 
 echo "Status: Installing  Zoom" >> ${DNLOG}
 ## Sophos
 /bin/echo "Installing Zoom"
 /bin/date
 
-${jamf_binary} policy -id 1158 --forceNoRecon # Zoom
-${jamf_binary} policy -id 1344 --forceNoRecon # Zoom Outlook Plug-In
+${jamf_binary} policy -trigger zoom --forceNoRecon # Zoom
+${jamf_binary} policy -trigger zoomOutlook --forceNoRecon # Zoom Outlook Plug-In
 
 echo "Status: Installing Wacom drivers" >> ${DNLOG}
 ## Wacom
 /bin/echo "Installing Wacom"
 /bin/date
-${jamf_binary} policy -id 858 --forceNoRecon # Wacom
+${jamf_binary} policy -trigger wacom --forceNoRecon # Wacom
 
 echo "Status: Installing Box Sync" >> ${DNLOG}
 ## Wacom
 /bin/echo "Installing Box Sync"
 /bin/date
-${jamf_binary} policy -id 1353 --forceNoRecon # Box SYnc
+${jamf_binary} policy -trigger boxSync --forceNoRecon # Box SYnc
 
 ## Finder Settings
 /bin/echo "Installing Finder"
 /bin/date
-${jamf_binary} policy -id 1375 --forceNoRecon # Finder
-${jamf_binary} policy -id 1379 --forceNoRecon # Mid Admin
-${jamf_binary} policy -id 1380 --forceNoRecon # Zidget
+${jamf_binary} policy -trigger finderPrefs --forceNoRecon # Finder
 
 echo "Status: Installing Computrace" >> ${DNLOG}
 ## Computrace
 /bin/echo "Installing Computrace"
 /bin/date
-${jamf_binary} policy -id 1374 --forceNoRecon # computrace
+${jamf_binary} policy -trigger computrace --forceNoRecon # computrace
 
 echo "Status: Installing Printers" >> ${DNLOG}
 
@@ -155,57 +142,46 @@ case ${city} in
 	
 Chicago)
 	
-	${jamf_binary} policy -id 1454 ## Chicago printers
-	${jamf_binary} policy -id 1495 ## Chicago printers
+	${jamf_binary} policy -trigger chicagoSecure ## Chicago printers
+	${jamf_binary} policy -trigger chicagoPrinters ## Chicago printers
 	
 	;;
 	
 Dallas)
 	
-	${jamf_binary} policy -id 1451 ## Dallas printers
+	${jamf_binary} policy -trigger dallasPrinters ## Dallas printers
 	
 	;;
 	
 Darien)
 	
-	${jamf_binary} policy -id 1455 ## Darien printers
+	${jamf_binary} policy -trigger darienPrinters ## Darien printers
 	
 	;;
 	
 Irvine)
 	
-	${jamf_binary} policy -id 1456 ## Irvine printers
+	${jamf_binary} policy -trigger irvinePrinters ## Irvine printers
 	
 	;;
 	
 "New York")
 	
-	${jamf_binary} policy -id 1453 ## New York printers
+	${jamf_binary} policy -trigger nycPrinters ## New York printers
 	
 	;;
 	
 "Los Angeles")
 	
-	${jamf_binary} policy -id 1597 ## Los Angeles printers
+	${jamf_binary} policy -trigger laPrinters ## Los Angeles printers
 	
 	;;
 esac
 	
-# disable password expiration note at loginwindow
-# per https://github.com/macmule/ADPassMon/wiki/Other-Settings#login-window-password-expiration
-defaults write /Library/Preferences/com.apple.loginwindow PasswordExpirationDays 0
-
-dscl . create /Users/omcadmin IsHidden 1
-
-# Configure ARD with allowed users and their ARD rights
-/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -configure -allowAccessFor -allUsers -privs \
-	 -DeleteFiles -ControlObserve -TextMessages -OpenQuitApps -GenerateReports -RestartShutdown -SendFiles -ChangeSettings -restart -agent -console
-/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate
-
 ## disabling FileVault pass thru authentication
 defaults write /Library/Preferences/com.apple.loginwindow DisableFDEAutoLogin -bool YES
 
-touch /Library/Application\ Support/JAMF/Receipts/us-das-tma-provisiondone.pkg
+touch /Library/Application\ Support/JAMF/Receipts/businessUnit-provisiondone.pkg
 
 echo "Status: Running Software Update" >> ${DNLOG}
 /bin/echo "Apple Software Updates"
@@ -217,9 +193,15 @@ echo "Status: Updating computer inventory" >> ${DNLOG}
 ${jamf_binary} recon
 
 ## upload log to JPS
-apiUser=$(DecryptString $4 'eb95be2b6190a00b' '9cf73208b6d5cc82ede3ef2b')
-apiPass=$(DecryptString $5 'b2ff32193fb97e66' '08c289c01cbdcd08eb6ef508')
-jpsURL="https://admin.jamf.omnicomgroup.com"
+#Decypt string 
+function DecryptString() {
+    echo "${1}" | /usr/bin/openssl enc -aes256 -d -a -A -S "${2}" -k "${3}"
+}
+
+apiUser=$(DecryptString $4 '<yoursalt>' '<yourkey>')
+apiPass=$(DecryptString $5 '<yoursalt>' '<yourkey>')
+jpsURL="https://your.jamfproserver.com"
+serial=$(system_profiler SPHardwareDataType | awk '/Serial\ Number\ \(system\)/ {print $NF}');
 
 ## get ID of computer
 JSS_ID=$(curl -H "Accept: text/xml" -sfku "${apiUser}:${apiPass}" "${jpsURL}/JSSResource/computers/serialnumber/${serial}/subset/general" | xpath /computer/general/id[1] | awk -F'>|<' '{print $3}')

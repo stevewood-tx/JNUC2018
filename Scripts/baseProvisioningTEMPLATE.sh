@@ -14,13 +14,12 @@
 
 ## Set global variables
 
-LOGPATH='/private/var/omc/logs'
+LOGPATH='/path/to/your/logs'
 LOGFILE=$LOGPATH/all-base-provisioning-$(date +%Y%m%d-%H%M).log
 VERSION=2.2
 DNLOG='/var/tmp/depnotify.log'
 defaults='/usr/bin/defaults'
-surveyPlist='/private/var/omc/com.omnicom.survey.plist'
-serial=$(system_profiler SPHardwareDataType | awk '/Serial\ Number\ \(system\)/ {print $NF}');
+surveyPlist='/path/to/com.company.survey.plist'
 
 ## setup number of DEP Notify stages for the progress bar
 if [[ ! $6 ]]; then
@@ -49,11 +48,9 @@ caffeinate -d -i -m -u &
 caffeinatepid=$!
 
 ## Setting up DEPNotify
-## get logo and store in /var/omc
-curl -sKO https://s3-us-west-2.amazonaws.com/omc-endpoint-drop/Pickup/PaigeLogo.png -o /var/omc/paige.png
 
 ## setup command file
-echo "Command: Image: /var/omc/paige.png" >> ${DNLOG}
+echo "Command: Image: /path/to/yourcompanylogo.png" >> ${DNLOG}
 echo "Command: Determinate: $dnStages" >> ${DNLOG}
 echo "Command: MainText: We are installing software on your machine. This process could take up to 40 minutes to complete so please make sure your computer is plugged in to power, and please do not restart until we are finished. Your computer will restart when we are done." >> ${DNLOG}
 echo "Status: Starting installations" >> ${DNLOG}
@@ -221,24 +218,23 @@ echo "Status: Begining software installations" >> $DNLOG
 ## Common Resources
 /bin/echo "Installing Common Resources"
 /bin/date
-${jamf_binary} policy -id 24 --forceNoRecon # AnyConnect, dockutil, cocoaDialog, VLC
-${jamf_binary} policy -id 120 --forceNoRecon # SwapNetwork
+${jamf_binary} policy -trigger commonUtils --forceNoRecon # AnyConnect, dockutil, cocoaDialog, VLC
 
 echo "Status: Common resources installed" >> $DNLOG
 
 ## Internet Plug-Ins
 /bin/echo "Installing Internet Plug-ins"
 /bin/date
-${jamf_binary} policy -id 36 --forceNoRecon #Java, Silverlight
+${jamf_binary} policy -trigger javaSilverlight --forceNoRecon #Java, Silverlight
 
 echo "Status: Installing printer drivers." >> $DNLOG
 
 ## Printer Drivers
 /bin/echo "Installing Printer Drivers"
 /bin/date
-${jamf_binary} policy -id 862 --forceNoRecon # Xerox Driver
-${jamf_binary} policy -id 863 --forceNoRecon # HP Driver
-${jamf_binary} policy -id 623 --forceNoRecon # Canon PS Driver
+${jamf_binary} policy -trigger xeroxdriver --forceNoRecon # Xerox Driver
+${jamf_binary} policy -trigger hpdriver --forceNoRecon # HP Driver
+${jamf_binary} policy -trigger canondriver --forceNoRecon # Canon PS Driver
 
 echo "Status: Printer drivers installed" >> $DNLOG
 echo "Status: Installing web browsers." >> $DNLOG
@@ -246,8 +242,8 @@ echo "Status: Installing web browsers." >> $DNLOG
 ## Web Browsers
 /bin/echo "Installing Web Browsers"
 /bin/date
-${jamf_binary} policy -id 55 --forceNoRecon # Firefox
-${jamf_binary} policy -id 10 --forceNoRecon # Chrome
+${jamf_binary} policy -trigger firefox --forceNoRecon # Firefox
+${jamf_binary} policy -trigger chrome --forceNoRecon # Chrome
 
 echo "Status: Web browsers installed" >> $DNLOG
 echo "Status: Installing Office 2016." >> $DNLOG
@@ -255,7 +251,7 @@ echo "Status: Installing Office 2016." >> $DNLOG
 ## Office 2016
 /bin/echo "Installing Office 2016"
 /bin/date
-${jamf_binary} policy -id 104 --forceNoRecon # Full Office Suite
+${jamf_binary} policy -trigger office2016 --forceNoRecon # Full Office Suite
 
 echo "Status: Office 2016 installed" >> $DNLOG
 echo "Status: Installing Skype for Business." >> $DNLOG
@@ -263,7 +259,7 @@ echo "Status: Installing Skype for Business." >> $DNLOG
 ## Skype for Biz
 /bin/echo "Installing Skype for Business"
 /bin/date
-${jamf_binary} policy -id 49 --forceNoRecon # Skype for Biz
+${jamf_binary} policy -trigger sfb --forceNoRecon # Skype for Biz
 
 echo "Status: Skype for Business installed" >> $DNLOG
 
@@ -277,9 +273,10 @@ function DecryptString() {
     echo "${1}" | /usr/bin/openssl enc -aes256 -d -a -A -S "${2}" -k "${3}"
 }
 
-apiUser=$(DecryptString $4 '2e8ae0cfc360c410' '6dc974aeee54c08a91d1ba4b')
-apiPass=$(DecryptString $5 'aee810da39e48b93' 'e78b44b6e96bf2892bc06de4')
-jpsURL="https://admin.jamf.omnicomgroup.com"
+apiUser=$(DecryptString $4 '<yoursalt>' '<yourkey>')
+apiPass=$(DecryptString $5 '<yoursalt>' '<yourkey>')
+jpsURL="https://your.jamfproserver.com"
+serial=$(system_profiler SPHardwareDataType | awk '/Serial\ Number\ \(system\)/ {print $NF}');
 
 ## get ID of computer
 JSS_ID=$(curl -H "Accept: text/xml" -sfku "${apiUser}:${apiPass}" "${jpsURL}/JSSResource/computers/serialnumber/${serial}/subset/general" | xpath /computer/general/id[1] | awk -F'>|<' '{print $3}')
